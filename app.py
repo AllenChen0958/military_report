@@ -9,7 +9,7 @@ from linebot.exceptions import (
 from linebot.models import *
 
 import yaml
-
+import random
 app = Flask(__name__)
 
 # Channel Access Token
@@ -61,9 +61,6 @@ def hello():
         88:
         ....
         ....
-    
-    
-
 
 }
 
@@ -89,12 +86,12 @@ step4
 import datetime
 import re
 data = {}
+id_name_table = {}
 
-# MORNING_START = datetime.time(7,0)
-# MORNING_END = datetime.time(13, 30)
+CHINESE_NUM = ["零","一","二","三","四","五","六","七","八","九","十"]
+SQUAD_NUM = 14 # 每班有幾人
+MESSAGE_MAX_WORD = 900
 
-# NIGHT_START = datetime.time(14,0)
-# NIGHT_END = datetime.time(22, 0)
 
 CONSTANT_TIME = {
     "morning": {
@@ -119,9 +116,7 @@ CONSTANT_TIME = {
 #     }
 # }
 
-CHINESE_NUM = ["零","一","二","三","四","五","六","七","八","九","十"]
-SQUAD_NUM = 14 # 每班有幾人
-MESSAGE_MAX_WORD = 900
+
 def isTimeInTimePeriod(startTime, endTime, _time): 
     if startTime < endTime: 
         return _time >= startTime and _time <= endTime 
@@ -141,7 +136,7 @@ def getTimeMode(_time):
 
 
 def timestamp2datetime(timestamp):
-    # it could be change to other format (need to modify datetime2timestamp function)
+    # it could be change to other format (EX: real timestamp * remember to modify datetime2timestamp function too)
     return datetime.datetime.strptime(timestamp, "%Y-%m-%d %H:%M")
 def datetime2timestamp(datetime_):
     return datetime_.strftime("%Y-%m-%d %H:%M")
@@ -151,36 +146,6 @@ def datetime2timestamp(datetime_):
 @handler.add(MessageEvent, message=TextMessage)
 def handle_message(event):
 
-
-    # text = event.message.text
-    # if "學號姓名" in text:
-    #     text = "yoyoyo"
-    # message = TextSendMessage(text=text)
-    
-    
-    # line_bot_api.reply_message(event.reply_token, message)
-
-
-
-    # print(event.source)
-    # line_bot_api.reply_message(event.reply_token, message)
-    # line_bot_api.reply_message(event.reply_token, TextSendMessage(text="test"))
-
-    # try:
-    #     if event.type != "group":
-    #         error_msg = "抱歉，本服務目前僅提供給群組使用，不開放個別用戶使用"
-    #         raise NotImplmentedError
-
-    # except NotImplmentedError:
-    #     line_bot_api.reply_message(event.reply_token, TextSendMessage(text=error_msg))
-    #     return
-
-
-    error_msg = "Sorry, some kind of error has occurred. Please contact the administrater."
-    # check type
-    
-    # nonlocal data
-    # print(data)
     group_id = None
     text = None
 
@@ -223,9 +188,8 @@ def handle_message(event):
                 reply_message = "{}-已更新回報內容".format(ID[-3:])
 
 
-            # TODO update data in memory and write log
-            # print(data)
-            # TODO check format and change reply message (low priority) 
+
+            # TODO check format and reply message (low priority) 
             line_bot_api.reply_message(event.reply_token, TextSendMessage(text=reply_message))
             return 
 
@@ -243,11 +207,11 @@ def handle_message(event):
         now = datetime.datetime.now()
         report_mode = getTimeMode(now)
         if report_mode=="morning":
-            reply_messages.append("早上回報統整:")
+            reply_messages.append(TextSendMessage(text="早上回報統整"))
         elif report_mode == "night":
-            reply_messages.append("晚上回報統整:")
+            reply_messages.append(TextSendMessage(text="晚上回報統整:"))
         if not data.get(group_id, {}):
-            reply_messages.append("尚未有人回報")
+            reply_messages.append(TextSendMessage(text="尚未有人回報"))
         else:
             squad = ((int(list(data[group_id].keys())[0])-1)//SQUAD_NUM) + 1
             report_text = []
@@ -255,9 +219,10 @@ def handle_message(event):
             text_count = 0
             start_key = (squad-1)*SQUAD_NUM+1
             for key in range((squad-1)*SQUAD_NUM+1, squad*SQUAD_NUM+1):
-                if key in data[group_id] and timestamp2datetime(data[group_id][key].get(report_mode, {"timestamp":"2021-01-01 00:01"})["timestamp"]).date() == now.date():
+                if key in data[group_id] and (key==90 or timestamp2datetime(data[group_id][key].get(report_mode, {"timestamp":"2021-01-01 00:01"})["timestamp"]).date() == now.date()):
+                    # print(text_count, len(data[group_id][key][report_mode]["text"]))
                     if text_count + len(data[group_id][key][report_mode]["text"]) > MESSAGE_MAX_WORD:
-                        reply_messages.append("第{}班 ({:03d}-{:03d})\n".format(CHINESE_NUM[squad], start_key, key-1) + "\n\n".join(report_text))
+                        reply_messages.append(TextSendMessage(text="第{}班 ({:03d}-{:03d})\n".format(CHINESE_NUM[squad], start_key, key-1) + "\n\n".join(report_text)))
                         report_text = []
                         start_key = key
                         text_count = 0
@@ -267,19 +232,15 @@ def handle_message(event):
                     not_report_id.append(str(key))
          
             if len(not_report_id)==SQUAD_NUM:
-                reply_messages.append("尚未有人回報")
+                reply_messages.append(TextSendMessage(text="尚未有人回報"))
             else:
-                reply_messages.append("第{}班 ({:03d}-{:03d})\n".format(CHINESE_NUM[squad], start_key, key) + "\n\n".join(report_text))
+                reply_messages.append(TextSendMessage(text="第{}班 ({:03d}-{:03d})\n".format(CHINESE_NUM[squad], start_key, key) + "\n\n".join(report_text)))
                 if not_report_id:
-                    reply_messages.append("尚未回報人員: {}".format(", ".join(not_report_id)))
+                    reply_messages.append(TextSendMessage(text="尚未回報人員: {}".format(", ".join(not_report_id))))
                 else:
-                    reply_messages.append("全員皆已回報，可以貼到大群記事本囉")
+                    reply_messages.append(TextSendMessage(text="全員皆已回報，可以貼到大群記事本囉"))
             
-        for message in reply_messages:
-            line_bot_api.push_message(group_id, TextSendMessage(text=message))
-
-
-        # line_bot_api.reply_message(event.reply_token, TextSendMessage(text=message))
+        line_bot_api.reply_message(event.reply_token, reply_messages)
     elif "清空回報" == text:
         if group_id in data:
             data[group_id] = {}
@@ -289,8 +250,18 @@ def handle_message(event):
         reply_message = "使用說明:\n\n1. 送出回報後，回報小幫手會回復 \"收到回報\"。\n\n2.如果回報小幫手甚麼都沒說，可能是它在圍爐過年，請再貼一次回報看看，或通知 090-陳昱名\n\n3. 如果要更新回報資訊，再回報一次即可\n\n4. 要統整回報，請打 \"統整回報\"\n\nP.S. 回報時，學號請拜託千萬要打對"
         line_bot_api.reply_message(event.reply_token, TextSendMessage(text=reply_message))
     elif "新年快樂" in text:
-        line_bot_api.reply_message(event.reply_token, TextSendMessage(text="新年快樂!!"))
-
+        congrad = ["恭賀新年、祝福心想事成","新年快樂，祝賀佳節愉快","祝你新年萬事如意，闔家平安","祝您在未來的一年裏吉星高照","祝福你，新年吉祥如意、事業財源廣進、感情處處逢緣！","祝您萬事都順心，新年快樂！","祝您在新的一年，財旺人旺凡事旺，天泰地泰三陽泰，人和事和萬事和。","祝年終滿荷包，幸福永遠繞。"]
+        line_bot_api.reply_message(event.reply_token, TextSendMessage(text=random.choice(congrad)))
+    else:
+        user_id = event.source.user_id
+        # name = id_name_table.get(user_id, None)
+        name = user_id
+        if not name:
+            profile = line_bot_api.get_profile(user_id)
+            name = id_name_table[user_id] = profile.display_name
+        with open("log/{}.log".format(group_id),"a") as f:
+            content  = datetime.datetime.now().strftime("%Y-%m-%d %H:%M") + " " + name + "\n" +  text + "\n\n"
+            f.write(content)
 
 
 import atexit
@@ -299,6 +270,9 @@ def exit_handler():
     # print(data)
     with open("data.yml", "w") as f:
         yaml.dump(data, f, default_flow_style=False, encoding='utf-8', allow_unicode=True)
+
+    with open("id_name_table.yml", "w") as f:
+        yaml.dump(id_name_table, f, default_flow_style=False, encoding='utf-8', allow_unicode=True)
 
 atexit.register(exit_handler)
 
@@ -309,11 +283,27 @@ if __name__ == "__main__":
     if os.path.isfile("data.yml"):
         with open("data.yml") as f:
             data = yaml.safe_load(f)
+        
     else:
         os.mknod("data.yml")
         data = {}
         with open("data.yml", "w") as f:
             yaml.dump(data, f, default_flow_style=False, Loader=yaml.FullLoader)
+
+    if os.path.isfile("id_name_table.yml"):
+        with open("id_name_table.yml") as f:
+            id_name_table = yaml.safe_load(f)
+
+    else:
+
+        os.mknod("id_name_table.yml")
+        id_name_table = {}
+        with open("id_name_table.yml", "w") as f:
+            # yaml.dump(id_name_table, f, default_flow_style=False, Loader=yaml.FullLoader)
+            yaml.dump(id_name_table, f, default_flow_style=False)
+
+
+
     port = int(os.environ.get('PORT', 5000))
     # app.run(host='0.0.0.0', port=port)
     app.run(host='0.0.0.0', port=port, ssl_context=('/home/archsearch/ssl_csr/nginx_bundle_d40133d96d13.crt', '/home/archsearch/ssl_csr/moana.210206.key'))
