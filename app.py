@@ -12,10 +12,16 @@ import yaml
 import random
 app = Flask(__name__)
 
+
+with open("token.yml") as f:
+    temp = yaml.safe_load(f)
+    token = temp["millitary_report_helper"]["token"]
+    secret = temp["millitary_report_helper"]["secret"]
+
 # Channel Access Token
-line_bot_api = LineBotApi('nR+N0rlAHNQYmeGxkTEgaMmMN0Wc4Tos2PveR3VxrfqJijzG75a4w7gVlcIq/Lkz8OjbhdUfjZLKCx6uxtGkRcfLHy4iKQddGLYwPF9HQZMAXNkD2BnBq2v0zCEd90IgWk8jNcDtgayy6Ai7eQFnVwdB04t89/1O/w1cDnyilFU=')
+line_bot_api = LineBotApi(token)
 # Channel Secret
-handler = WebhookHandler('e53bdc0200da932a63dfb19753a7df56')
+handler = WebhookHandler(secret)
 
 # 監聽所有來自 /callback 的 Post Request
 @app.route("/callback", methods=['POST'])
@@ -89,7 +95,9 @@ data = {}
 id_name_table = {}
 
 CHINESE_NUM = ["零","一","二","三","四","五","六","七","八","九","十"]
-SQUAD_NUM = 14 # 每班有幾人
+# SQUAD_NUM = 14 # 每班有幾人
+SQUAD_RANGE = [(1, 13), (14, 26), (27,39), (40, 52), (53, 65), (66, 79), (80, 93), (94, 106), (107, 119)]
+# SQUAD_NUMs = [13, 26, 39]
 MESSAGE_MAX_WORD = 900
 
 
@@ -142,6 +150,13 @@ def datetime2timestamp(datetime_):
     return datetime_.strftime("%Y-%m-%d %H:%M")
 
 
+def get_squad(num):
+    for squad, bound in enumerate(SQUAD_RANGE):
+        if bound[0] <= num <= bound[1]:
+            return squad + 1
+    raise ValueError
+
+
 # 處理訊息
 @handler.add(MessageEvent, message=TextMessage)
 def handle_message(event):
@@ -159,7 +174,10 @@ def handle_message(event):
     
     
     text = event.message.text
-    if "學號姓名" in text:
+    if group_id=="U0d8b9cf3d56a312048b2c3da29494fbc":
+        print("big group message")
+        return
+    elif "學號姓名" in text:
         data[group_id] = data.get(group_id, {})
 
         now = datetime.datetime.now()
@@ -213,12 +231,20 @@ def handle_message(event):
         if not data.get(group_id, {}):
             reply_messages.append(TextSendMessage(text="尚未有人回報"))
         else:
-            squad = ((int(list(data[group_id].keys())[0])-1)//SQUAD_NUM) + 1
+            # squad = ((int(list(data[group_id].keys())[0])-1)//SQUAD_NUM) + 1
+            # l_bound = (squad-1)*SQUAD_NUM+1
+            # r_bound = squad*SQUAD_NUM+1
+            # start_key = (squad-1)*SQUAD_NUM+1
+
+            
+            squad = get_squad(int(list(data[group_id].keys())[0]))
+            start_key = l_bound = SQUAD_RANGE[squad-1][0]
+            r_bound = SQUAD_RANGE[squad-1][1] + 1
             report_text = []
             not_report_id = []
             text_count = 0
-            start_key = (squad-1)*SQUAD_NUM+1
-            for key in range((squad-1)*SQUAD_NUM+1, squad*SQUAD_NUM+1):
+            
+            for key in range(l_bound, r_bound):
                 if key in data[group_id] and (key==90 or timestamp2datetime(data[group_id][key].get(report_mode, {"timestamp":"2021-01-01 00:01"})["timestamp"]).date() == now.date()):
                     # print(text_count, len(data[group_id][key][report_mode]["text"]))
                     if text_count + len(data[group_id][key][report_mode]["text"]) > MESSAGE_MAX_WORD:
@@ -231,7 +257,8 @@ def handle_message(event):
                 else:
                     not_report_id.append(str(key))
          
-            if len(not_report_id)==SQUAD_NUM:
+            # if len(not_report_id)==SQUAD_NUM:
+            if len(not_report_id)==SQUAD_RANGE[squad-1][1]-SQUAD_RANGE[squad-1][0]+1:
                 reply_messages.append(TextSendMessage(text="尚未有人回報"))
             else:
                 reply_messages.append(TextSendMessage(text="第{}班 ({:03d}-{:03d})\n".format(CHINESE_NUM[squad], start_key, key) + "\n\n".join(report_text)))
@@ -288,7 +315,8 @@ if __name__ == "__main__":
         os.mknod("data.yml")
         data = {}
         with open("data.yml", "w") as f:
-            yaml.dump(data, f, default_flow_style=False, Loader=yaml.FullLoader)
+            # yaml.dump(data, f, default_flow_style=False, Loader=yaml.FullLoader)
+            yaml.dump(data, f, default_flow_style=False)
 
     if os.path.isfile("id_name_table.yml"):
         with open("id_name_table.yml") as f:
