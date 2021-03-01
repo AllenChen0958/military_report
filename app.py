@@ -137,6 +137,8 @@ def handle_message(event):
     if group_id=="Cfeadcff3b7c30db62300e797e0c7e30a":
         # print("big group message")
         return
+    elif "tag"==text[:3]:
+        pass
     elif "學號姓名" in text:
         data[group_id] = data.get(group_id, {})
 
@@ -247,11 +249,16 @@ def handle_message(event):
         line_bot_api.reply_message(event.reply_token, TextSendMessage(text=random.choice(congrad)))
     else:
         user_id = event.source.user_id
-        # name = id_name_table.get(user_id, None)
-        name = user_id
+        profile = id_name_table.get(user_id, {})
+        name = profile.get("display_name", None)
+        # name = user_id
         if not name:
-            profile = line_bot_api.get_profile(user_id)
-            name = id_name_table[user_id] = profile.display_name
+            profile = line_bot_api.get_group_member_profile(group_id, user_id)
+            name = profile.display_name
+            id_name_table[user_id] = id_name_table.get(user_id, {})
+            id_name_table[user_id]["display_name"] = name
+        
+        # name = user_id
         with open("log/{}.log".format(group_id),"a") as f:
             content  = datetime.datetime.now().strftime("%Y-%m-%d %H:%M") + " " + name + "\n" +  text + "\n\n"
             f.write(content)
