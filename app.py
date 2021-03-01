@@ -12,6 +12,10 @@ import yaml
 import random
 app = Flask(__name__)
 
+# TODO
+# 1. detect false ID
+# 2. tag function
+# 3. build ID name table 
 
 with open("token.yml") as f:
     temp = yaml.safe_load(f)
@@ -43,50 +47,6 @@ def callback():
 @app.route('/hello')
 def hello():
     return 'Hello, World!'
-
-
-# TODO: 
-"""
-
-
-{
-    group_id:
-        85:
-            {
-                
-                morning: {
-                    timestamp:
-                    text:
-                },
-                afternoon: {
-                        
-                }
-            }
-        86:
-        87:
-        88:
-        ....
-        ....
-
-}
-
-
-step0. check key word (report, ID name)
-
-step1. 
-    search by group id
-
-step2. 
-    check id 
-
-
-step3 
-    check date
-
-
-step4 
-    check time
-"""
 
 
 import datetime
@@ -174,8 +134,8 @@ def handle_message(event):
     
     
     text = event.message.text
-    if group_id=="U0d8b9cf3d56a312048b2c3da29494fbc":
-        print("big group message")
+    if group_id=="Cfeadcff3b7c30db62300e797e0c7e30a":
+        # print("big group message")
         return
     elif "學號姓名" in text:
         data[group_id] = data.get(group_id, {})
@@ -237,7 +197,13 @@ def handle_message(event):
             # start_key = (squad-1)*SQUAD_NUM+1
 
             
-            squad = get_squad(int(list(data[group_id].keys())[0]))
+            # squad = get_squad(int(list(data[group_id].keys())[0]))
+
+            # prevent someone type wrong ID 
+            IDs = list(data[group_id].keys())[:4]
+            squads = list(map(lambda x:get_squad(int(x)), IDs))
+            squad = max(set(squads), key=squads.count)
+
             start_key = l_bound = SQUAD_RANGE[squad-1][0]
             r_bound = SQUAD_RANGE[squad-1][1] + 1
             report_text = []
