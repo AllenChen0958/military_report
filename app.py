@@ -126,7 +126,6 @@ def handle_message(event):
         line_bot_api.reply_message(event.reply_token, TextSendMessage(text="抱歉，本服務目前僅提供給群組使用，請先邀請我到群組"))
         return
     else:
-        # print(event.source)
         group_id = event.source.group_id
     
     
@@ -144,7 +143,6 @@ def handle_message(event):
             m = re.search("(?<=學號姓名[：:\ ])[0-9]+", text)
             if m:
                 ID = m.group(0)
-                print(m, ID)
             else:
                 line_bot_api.reply_message(event.reply_token, TextSendMessage(text="請確認回報格式(學號格式不正確)"))
                 return
@@ -200,7 +198,6 @@ def handle_message(event):
                         break
                     except ValueError:
                         pass
-            print(squad)
             if squad is None:
                 line_bot_api.reply_message(event.reply_token, TextSendMessage(text="尚未有人回報"))
                 return
@@ -244,7 +241,6 @@ def handle_message(event):
         line_bot_api.reply_message(event.reply_token, reply_messages)
     elif "設定退伍人員" == text[:6]:
         data[group_id]["veteran"] = data[group_id].get("veteran", set()) | set(map(int, re.findall(r"[0-9]+", text)))
-        print(data[group_id]["veteran"])
         reply_message = "目前退伍人員: {}".format(", ".join(map(str, list(data[group_id].get("veteran", set())))))
         line_bot_api.reply_message(event.reply_token, TextSendMessage(text=reply_message))
     elif "取消退伍人員" == text[:6]:
