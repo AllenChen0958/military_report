@@ -109,7 +109,7 @@ CONSTANT_TIME = {
     },
     "night": {
         "start":datetime.time(14,0),
-        "end": datetime.time(23, 0)
+        "end": datetime.time(23, 30)
     }
 }
 
@@ -175,9 +175,10 @@ def handle_message(event):
         report_mode = getTimeMode(now)
         
         if report_mode=="morning" or report_mode=="night":
-            m = re.search("(?<=學號姓名[：:\ ])[0-9]*", text)
+            m = re.search("(?<=學號姓名[：:\ ])[0-9]+", text)
             if m:
                 ID = m.group(0)
+                print(m, ID)
             else:
                 line_bot_api.reply_message(event.reply_token, TextSendMessage(text="請確認回報格式(學號格式不正確)"))
                 return
@@ -211,6 +212,8 @@ def handle_message(event):
             return
     
     # 如有 "統整回報" 則存進
+    elif "學號" == text[:2] or "姓名" == text[:2]:
+        line_bot_api.reply_message(event.reply_token, TextSendMessage(text="請確認回報格式(開頭須包含\"學號姓名\"四個字)"))
     elif "統整回報" == text:
 
         reply_messages = []
@@ -231,9 +234,9 @@ def handle_message(event):
                         break
                     except ValueError:
                         pass
-            
+            print(squad)
             if squad is None:
-                reply_messages.append(TextSendMessage(text="尚未有人回報"))
+                line_bot_api.reply_message(event.reply_token, TextSendMessage(text="尚未有人回報"))
                 return
             
             start_key = l_bound = SQUAD_RANGE[squad-1][0]
@@ -259,6 +262,8 @@ def handle_message(event):
             # if len(not_report_id)==SQUAD_NUM:
             if len(not_report_id) + len(data[group_id].get("veteran", set()))==SQUAD_RANGE[squad-1][1]-SQUAD_RANGE[squad-1][0]+1:
                 reply_messages.append(TextSendMessage(text="尚未有人回報"))
+            elif len(data[group_id].get("veteran", set()))==SQUAD_RANGE[squad-1][1]-SQUAD_RANGE[squad-1][0]+1:
+                reply_messages.append(TextSendMessage(text="恭喜所有人都順利退伍囉"))
             else:
                 reply_messages.append(TextSendMessage(text="第{}班 ({:03d}-{:03d})\n".format(CHINESE_NUM[squad], start_key, key) + "\n\n".join(report_text)))
                 
@@ -273,6 +278,7 @@ def handle_message(event):
         line_bot_api.reply_message(event.reply_token, reply_messages)
     elif "設定退伍人員" == text[:6]:
         data[group_id]["veteran"] = data[group_id].get("veteran", set()) | set(map(int, re.findall(r"[0-9]+", text)))
+        print(data[group_id]["veteran"])
         reply_message = "目前退伍人員: {}".format(", ".join(map(str, list(data[group_id].get("veteran", set())))))
         line_bot_api.reply_message(event.reply_token, TextSendMessage(text=reply_message))
     elif "取消退伍人員" == text[:6]:
@@ -280,7 +286,12 @@ def handle_message(event):
         reply_message = "目前退伍人員: {}".format(", ".join(map(str, list(data[group_id].get("veteran", set())))))
         line_bot_api.reply_message(event.reply_token, TextSendMessage(text=reply_message))
 
-    
+    elif "清空回報" == text:
+        if group_id in data:
+            veteran = data[group_id].get("veteran", set())
+            data[group_id] = {}
+            data[group_id]["veteran"] = veteran
+        line_bot_api.reply_message(event.reply_token, TextSendMessage(text="清空回報成功"))
     elif "恢復初始設定" == text:
         if group_id in data:
             data[group_id] = {}
