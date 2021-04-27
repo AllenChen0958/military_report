@@ -7,7 +7,7 @@
 
 ### 使用說明
 
-- #### 加入回報小幫手 (本服務將於2021.04.28以後正式終止，可參考下方架設伺服器說明，自行將本服務部署在其他伺服器上使用)
+- #### 加入回報小幫手 (本服務將於2021.04.28以後正式終止，可參考下方伺服器架設說明，自行將本服務部署在其他伺服器上使用)
 掃描下方QR，將回報小幫手設為好友，並將小幫手加入群組內
 <img src="https://imgur.com/NCV8xaF.jpg" style="float:left" /> 
 
@@ -54,4 +54,40 @@ _*因本服務是用於統整後，方便負責統計的人貼於記事本，而
 如果跟小幫手說"新年快樂"
 他會回復你:)
 
+### 伺服器架設說明
+
+- #### 私人伺服
+架設 Line 的後端伺服器可大致分為兩種方式: (1)架設私人伺服器或(2)架設商業雲端平台 (Heroku)
+以下列舉兩種架設方式的優缺點  
+|     | 私人伺服器 | 商業雲端平台 |
+| --- | ---------- | ------------ |
+| 優點 | 好Debug、方便管理資料庫、可快速更改設定 | 部署快速簡單、有免費方案 |
+|缺點 | 架設複雜、成本高(機器、電力) | 不易Debug、會自動進入休眠模式 |
+
+
+本服務目前是架設於私人伺服器，因此概略介紹大致部署流程  
+- 建立 Provider  
+到[Line Developer 官網](https://developers.line.biz/console/)用自己的Line帳號建立Provider，可參考網路[相關文章](https://github.com/yaoandy107/line-bot-tutorial#%E5%89%B5%E5%BB%BA-line-bot-%E9%A0%BB%E9%81%93)建立- 
+
+- 為自己的伺服器IP位址申請Domain Name(網域名稱)  
+看大家是否有自己的Domain Name或是還是學生的話，可以用[Github Education Pack](https://education.github.com/pack/offers) 在[NameCheap](https://www.namecheap.com/cart/addtocart.aspx?producttype=ssl&product=positivessl&action=purchase&period=1-YEAR&qty=1) 免費申請一個(一年)
+
+- 獲得SSL憑證
+為自己的Domain Name申請SSL憑證  
+其中Line要求的SSL憑證需要由有認證的機構發出(無法使用python自行產生)，同樣也可以到[NameCheap](https://www.namecheap.com/cart/addtocart.aspx?producttype=ssl&product=positivessl&action=purchase&period=1-YEAR&qty=1) 免費申請一個(一年)
+
+- 設定Token 以及 Secret
+新增一個檔案取名為token.yml，並將LINE的Token以及secret新增在裡面，格式如下  
+```
+millitary_report_helper: 
+  token: [YOUR LINE TOKEN]
+  secret: [YOUR LINE Secret]
+```
+
+- 將自己申請的Domain Name 與 Line 綁訂
+將自己的Domain Name填入自己新增的LINE Provider 的webook URL，如下  
+https://imgur.com/OckfG3h
+
+接著將程式啟動後就完成了
+另外也可參考網路[相關文章](https://github.com/yaoandy107/line-bot-tutorial)，利用Heroku將服務部署在雲端上
 
