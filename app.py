@@ -10,8 +10,16 @@ from linebot.models import *
 
 import yaml
 import random
+import datetime
+import re
+
+
+
+
 app = Flask(__name__)
 
+data = {}
+CHINESE_NUM = ["零","一","二","三","四","五","六","七","八","九","十"]
 
 # Read the token from token.yml
 #millitary_report_helper: 
@@ -50,56 +58,13 @@ def callback():
 def hello():
     return 'Hello, World!'
 
-# data structure
-"""
-{
-    group_id:
-        85:
-            {
-                
-                morning: {
-                    timestamp: .....
-                    text: .....
-                },
-                afternoon: {
-                    timestamp: .....
-                    text: .....
-                }
-            }
-        86:
-        87:
-        88:
-        ....
-        ....
-
-}
-
-"""
 
 
-import datetime
-import re
-data = {}
-
-CHINESE_NUM = ["零","一","二","三","四","五","六","七","八","九","十"]
 
 # 第一班是從1~13號, 第二班是14~26號....以此類推
 SQUAD_RANGE = [(1, 13), (14, 26), (27,39), (40, 52), (53, 65), (66, 79), (80, 93), (94, 106), (107, 119)]
 
 MESSAGE_MAX_WORD = 900
-
-
-# CONSTANT_TIME = {
-#     "morning": {
-#         "start":datetime.time(7,0), 
-#         "end": datetime.time(13, 30)
-#     },
-#     "night": {
-#         "start":datetime.time(14,0),
-#         "end": datetime.time(22, 0)
-#     }
-# }
-
 
 # 設定可回報時間
 CONSTANT_TIME = {
@@ -109,9 +74,10 @@ CONSTANT_TIME = {
     },
     "night": {
         "start":datetime.time(14,0),
-        "end": datetime.time(23, 30)
+        "end": datetime.time(22, 0)
     }
 }
+
 
 # 檢查時間是否在特定時段
 def isTimeInTimePeriod(startTime, endTime, _time): 
