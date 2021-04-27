@@ -298,7 +298,7 @@ def handle_message(event):
         line_bot_api.reply_message(event.reply_token, TextSendMessage(text="已清空回報資料並恢復初始設定"))
     
     elif "說明" == text:
-        reply_message = "使用說明:\n\n1. 送出回報後，回報小幫手會回復 \"收到回報\"。\n\n2.如果回報小幫手甚麼都沒說，可能是它在休假，請稍後再貼一次回報看看，或通知 099-陳昱名 or 113-吳昱陞\n\n3. 如果要更新回報資訊，再回報一次即可\n\n4. 要統整回報，請打 \"統整回報\"\n\nP.S. 回報時，學號請拜託千萬要打對"
+        reply_message = "請參考圖文教學:\n https://github.com/AllenChen0958/military_report#%E4%BD%BF%E7%94%A8%E8%AA%AA%E6%98%8E "
         line_bot_api.reply_message(event.reply_token, TextSendMessage(text=reply_message))
     elif "新年快樂" in text:
         congrad = ["恭賀新年、祝福心想事成","新年快樂，祝賀佳節愉快","祝你新年萬事如意，闔家平安","祝您在未來的一年裏吉星高照","祝福你，新年吉祥如意、事業財源廣進、感情處處逢緣！","祝您萬事都順心，新年快樂！","祝您在新的一年，財旺人旺凡事旺，天泰地泰三陽泰，人和事和萬事和。","祝年終滿荷包，幸福永遠繞。"]
