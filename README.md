@@ -5,9 +5,6 @@
 本服務提供給被失去4個月自由的117旅弟兄們使用。
 方便協助放假在外，卻要負責統計回報人員名單的弟兄，可以快速完成統計
 
-__在開始之前，如果您對小幫手提供的服務感到滿意，請幫我按下右上角的星星:__
-<img src="https://imgur.com/07tamUn.jpg" style="float:left" /> 
-
 ### 使用說明
 
 - #### 加入回報小幫手 (本服務將於2021.04.28以後正式終止，可參考下方[伺服器架設說明](https://github.com/AllenChen0958/military_report/blob/special_squad_num/README.md#%E4%BC%BA%E6%9C%8D%E5%99%A8%E6%9E%B6%E8%A8%AD%E8%AA%AA%E6%98%8E)，自行將本服務部署在其他伺服器上使用)
